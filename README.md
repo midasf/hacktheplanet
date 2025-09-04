@@ -14,8 +14,8 @@ Outside of work, I love spending time outdoors—whether it's rowing at sea or s
 
 ## Projects
 
-- **Kubernetes Platform Engineering:**  
-  Designed and managed scalable Kubernetes clusters to support Knab’s container architecture and CI/CD pipelines.
+- **Platform Engineering:**  
+  Designed and managed supporting infrastructure for our scalable Kubernetes clusters to support Knab’s container architecture and CI/CD pipelines.
 
 - **AWS Cloud Infrastructure:**  
   Leading the migration and management of critical infrastructure in AWS, implementing Infrastructure as Code (IaC) with Terraform and automating deployments for high availability and security.
@@ -31,6 +31,7 @@ Outside of work, I love spending time outdoors—whether it's rowing at sea or s
 ## Skills
 
 - Terraform, AWS, Azure
+- Powershell
 - Kubernetes, Containers, Linux
 - CI/CD, Jenkins, GitLab
 - Monitoring, Observability
