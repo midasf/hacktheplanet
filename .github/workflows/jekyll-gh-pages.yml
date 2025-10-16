@@ -37,7 +37,39 @@ jobs:
           destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+  export:
+    # Run the export step in the stirlingtools/stirling-pdf container image
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: stirlingtools/stirling-pdf:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Generate PDFs from Markdown
+        run: |
+          set -e
+          mkdir -p pdfs
+          # Convert all tracked markdown files (exclude _site) to PDFs
+          git ls-files '*.md' | grep -v '^_site/' | while read -r f; do
+            out="pdfs/$(basename "${f%.*}").pdf"
+            echo "Converting $f -> $out"
+            if command -v stirling-pdf >/dev/null 2>&1; then
+              stirling-pdf "$f" -o "$out"
+            elif command -v stpdf >/dev/null 2>&1; then
+              stpdf "$f" -o "$out"
+            else
+              # fallback: try pandoc if available
+              pandoc "$f" -o "$out"
+            fi
+          done
+
+      - name: Upload PDFs artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pdfs
+          path: pdfs
   # Deployment job
   deploy:
     environment:
