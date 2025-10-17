@@ -46,26 +46,32 @@ jobs:
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v5
-
-      - name: Generate PDFs from Markdown
+      - name : Extract artifact
         run: |
           set -e
-          mkdir -p pdfs
-          # Convert all tracked markdown files (exclude _site) to PDFs
-          ls /__w/hacktheplanet/hacktheplanet/
-          tar -xv /__w/hacktheplanet/hacktheplanet/* -C /__w/hacktheplanet/hacktheplanet
-          ls -R '/__w/hacktheplanet/hacktheplanet/*.md' | grep -v '^_site/' | while read -r f; do
-            out="pdfs/$(basename "${f%.*}").pdf"
-            echo "Converting $f -> $out"
-            if command -v stirling-pdf >/dev/null 2>&1; then
-              stirling-pdf "$f" -o "$out"
-            elif command -v stpdf >/dev/null 2>&1; then
-              stpdf "$f" -o "$out"
-            else
-              # fallback: try pandoc if available
-              pandoc "$f" -o "$out"
-            fi
-          done
+          mkdir -p /__w/hacktheplanet/hacktheplanet
+          tar -xvf pages-artifact.tar -C /__w/hacktheplanet/hacktheplanet
+          ls -R /__w/hacktheplanet/hacktheplanet  
+
+      # - name: Generate PDFs from Markdown
+      #   run: |
+      #     set -e
+      #     mkdir -p pdfs
+      #     # Convert all tracked markdown files (exclude _site) to PDFs
+      #     ls /__w/hacktheplanet/hacktheplanet/
+      #     tar -xv /__w/hacktheplanet/hacktheplanet/artifact.tar -C /__w/hacktheplanet/hacktheplanet
+      #     ls -R '/__w/hacktheplanet/hacktheplanet/*.md' | grep -v '^_site/' | while read -r f; do
+      #       out="pdfs/$(basename "${f%.*}").pdf"
+      #       echo "Converting $f -> $out"
+      #       if command -v stirling-pdf >/dev/null 2>&1; then
+      #         stirling-pdf "$f" -o "$out"
+      #       elif command -v stpdf >/dev/null 2>&1; then
+      #         stpdf "$f" -o "$out"
+      #       else
+      #         # fallback: try pandoc if available
+      #         pandoc "$f" -o "$out"
+      #       fi
+      #     done
 
       - name: Upload PDFs artifact
         uses: actions/upload-artifact@v4
