@@ -50,7 +50,7 @@ jobs:
         run: |
           set -e
           ls /__w/hacktheplanet/hacktheplanet
-          tar -xvf pages-artifact.tar -C /__w/hacktheplanet/hacktheplanet
+          tar -xvf /__w/hacktheplanet/hacktheplanet/artifact.tar -C /__w/hacktheplanet/hacktheplanet
           ls -R /__w/hacktheplanet/hacktheplanet  
 
       # - name: Generate PDFs from Markdown
