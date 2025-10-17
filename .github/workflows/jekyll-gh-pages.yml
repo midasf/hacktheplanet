@@ -52,6 +52,7 @@ jobs:
           set -e
           mkdir -p pdfs
           # Convert all tracked markdown files (exclude _site) to PDFs
+          ls /__w/hacktheplanet/hacktheplanet/
           unzip -q /__w/hacktheplanet/hacktheplanet/* -d /__w/hacktheplanet/hacktheplanet
           ls -R '/__w/hacktheplanet/hacktheplanet/*.md' | grep -v '^_site/' | while read -r f; do
             out="pdfs/$(basename "${f%.*}").pdf"
