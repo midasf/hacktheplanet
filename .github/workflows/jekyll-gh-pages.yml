@@ -49,7 +49,7 @@ jobs:
       - name : Extract artifact
         run: |
           set -e
-          mkdir -p /__w/hacktheplanet/hacktheplanet
+          ls /__w/hacktheplanet/hacktheplanet
           tar -xvf pages-artifact.tar -C /__w/hacktheplanet/hacktheplanet
           ls -R /__w/hacktheplanet/hacktheplanet  
 
