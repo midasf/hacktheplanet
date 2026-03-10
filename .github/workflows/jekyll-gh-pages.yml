@@ -85,8 +85,8 @@ jobs:
           name: source
           path: source
 
-      - name: Install pandoc
-        run: sudo apt-get install -y pandoc
+      - name: Install pandoc and wkhtmltopdf
+        run: sudo apt-get install -y pandoc wkhtmltopdf
 
       - name: Generate PDFs from Markdown
         run: |
@@ -97,7 +97,7 @@ jobs:
             out="pdfs/${rel%.*}.pdf"
             mkdir -p "$(dirname "$out")"
             echo "Converting $f -> $out"
-            pandoc "$f" -o "$out"
+            pandoc "$f" -o "$out" --pdf-engine=wkhtmltopdf
           done
 
       - name: Upload PDFs artifact
