@@ -85,6 +85,8 @@ jobs:
           name: source
           path: source
 
+      - name: Update and do things
+        run: sudo apt-get update -y 
       - name: Install pandoc and wkhtmltopdf
         run: sudo apt-get install -y pandoc wkhtmltopdf
 
