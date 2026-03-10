@@ -1,84 +1,111 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
+  security-events: write  # Required for uploading SARIF results
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Build job
+  # Security scan job - runs independently, doesn't block deploy
+  kics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create KICS results dir
+        run: mkdir -p kics-results
+
+      - name: Run KICS scan
+        uses: checkmarx/kics-github-action@v2.1.19
+        with:
+          path: '.'
+          output_path: kics-results
+          output_formats: 'json,sarif'
+          fail_on: high,medium          # Only fail on HIGH/MEDIUM, not LOW/INFO
+          ignore_on_exit: results       # Don't fail the workflow on findings, just report
+          exclude_paths: "_site,pdfs"   # Skip build output directories
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()                    # Upload even if scan found issues
+        with:
+          sarif_file: kics-results/results.sarif
+
+      - name: Upload full KICS results artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kics-results
+          path: kics-results/results.json
+
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-      - name: Upload artifact
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: |
+            **/*.md
+            !_site/**
+
   export:
-    # Run the export step in the stirlingtools/stirling-pdf container image
     needs: build
     runs-on: ubuntu-latest
-    container:
-      image: stirlingtools/stirling-pdf:latest
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v5
-      - name : Extract artifact
+      - name: Download source artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source
+          path: source
+
+      - name: Install pandoc
+        run: sudo apt-get install -y pandoc
+
+      - name: Generate PDFs from Markdown
         run: |
           set -e
-          ls /__w/hacktheplanet/hacktheplanet
-          tar -xvf /__w/hacktheplanet/hacktheplanet/artifact.tar -C /__w/hacktheplanet/hacktheplanet
-          ls -R /__w/hacktheplanet/hacktheplanet  
-
-      # - name: Generate PDFs from Markdown
-      #   run: |
-      #     set -e
-      #     mkdir -p pdfs
-      #     # Convert all tracked markdown files (exclude _site) to PDFs
-      #     ls /__w/hacktheplanet/hacktheplanet/
-      #     tar -xv /__w/hacktheplanet/hacktheplanet/artifact.tar -C /__w/hacktheplanet/hacktheplanet
-      #     ls -R '/__w/hacktheplanet/hacktheplanet/*.md' | grep -v '^_site/' | while read -r f; do
-      #       out="pdfs/$(basename "${f%.*}").pdf"
-      #       echo "Converting $f -> $out"
-      #       if command -v stirling-pdf >/dev/null 2>&1; then
-      #         stirling-pdf "$f" -o "$out"
-      #       elif command -v stpdf >/dev/null 2>&1; then
-      #         stpdf "$f" -o "$out"
-      #       else
-      #         # fallback: try pandoc if available
-      #         pandoc "$f" -o "$out"
-      #       fi
-      #     done
+          mkdir -p pdfs
+          find source -name "*.md" | while read -r f; do
+            rel="${f#source/}"
+            out="pdfs/${rel%.*}.pdf"
+            mkdir -p "$(dirname "$out")"
+            echo "Converting $f -> $out"
+            pandoc "$f" -o "$out"
+          done
 
       - name: Upload PDFs artifact
         uses: actions/upload-artifact@v4
         with:
           name: pdfs
           path: pdfs
-  # Deployment job
+
   deploy:
     environment:
       name: github-pages
